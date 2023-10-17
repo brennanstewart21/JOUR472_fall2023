@@ -82,11 +82,11 @@ baltco_911_overdose_calls |>
 
 Q3. Now let's look at locations. Which ones have the most calls? How would you describe them (feel free to search for more information on them)? Is there anything about the structure of the original data that might make you less confident in the counts by location or date?
 
-A3.The original data does not include zip codes, only the first line of the street addresses. This could skew the counts if there were calls at different locations that contain the same street addresses. 
+A3.4540 Silver Spring Rd has the most calls with 36. The original data does not include zip codes, only the first line of the street addresses. This could skew the counts if there were calls at different locations that contain the same street addresses. 
 
 ```{r}
 baltco_911_overdose_calls |>
-  group_by(address) |>
+  group_by(location) |>
   summarize(count = n()) |>
   arrange(desc(count))
 
