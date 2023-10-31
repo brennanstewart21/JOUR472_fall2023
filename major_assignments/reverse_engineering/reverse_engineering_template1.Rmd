@@ -144,6 +144,14 @@ marvel_data |>
 ```{r}
 # Put code to reverse engineer sentence here
 
+dc_appearances_greater_10 <- dc_data |> group_by(SEX, APPEARANCES) |> filter(APPEARANCES >= 10)
+
+dc_appearances_greater_10 |>
+  filter(str_detect(SEX, 'Female Characters')) |>
+  group_by(SEX, APPEARANCES >=10) |>
+  summarize(count=n()) |>
+  mutate(pct_female_appearances = (count/2415)*100)
+
 # Display results of code below this codeblock
 
 ```
