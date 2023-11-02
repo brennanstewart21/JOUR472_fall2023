@@ -1,0 +1,211 @@
+---
+title: "Reverse Engineering Project"
+author: "Laura Charleston, Brennan Stewart, Nur Yavuz"
+date: "Date here"
+output:
+  html_document:
+    theme: cerulean
+    highlight: pygments
+    toc: true
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+In this notebook, we are reverse engineering the story, [Comic Books Are Still Made By Men, For Men and About MEN](STORY%20URL)
+
+## Load libraries
+
+Loading required libraries for this analysis.
+
+```{r echo=FALSE, message=FALSE}
+
+library(tidyverse)
+library(janitor)
+library(lubridate)
+```
+
+## Load and Cleaning Data
+
+In this section, describe the source of the data, write a basic data dictionary for data you are working with, and discuss any caveats or issues you discovered working with this data.
+
+```{r}
+# Load required data
+
+marvel_data <- read_csv("marvel-wikia-data.csv")
+
+
+dc_data <- read_csv("dc-wikia-data.csv")
+
+
+
+# Path to data should be loaded from folder "data" i.e. read_csv("data/name_of_data.csv")
+
+# Clean required data and prepare for analysis if needed. 
+
+#dc_data <- dc_data |> mutate(FIRST APPEARANCE = strftime(`FIRST APPEARANCE`, mdy(date))) |>show_col_types = FALSE
+
+
+
+  
+
+```
+
+## Sentences to Engineer
+
+In this notebook, we are reverse engineering five sentences from the story.
+
+### Sentence 1
+
+-   **Sentence text**:
+
+    Women were underrepresented among characters with at least one appearance, and females only made up 29.3% of the DC character list and 24.7% of the Marvel roster.
+
+-   **Analysis summary**: The results of this analysis show that both Marvel and DC have just under 30% of all their characters being female, according to the data pulled from each entity's respective Wikia page. The R analysis is in alignment with the results explained in the article.
+
+```{r}
+# Put code to reverse engineer sentence here
+
+#dc_data <- dc_data |> group_by(SEX, APPEARANCES) |> mutate(pct_representation = Female Characters/`FIRST APPEARANCES`)*100
+
+#dc_data <- dc_data|> mutate(percent_female = (100*n()/NROW ("Female Characters")))|> arrange (percent_female)
+ 
+
+dc_data |>
+  group_by(SEX)|>
+  summarize(count = n())|>
+  mutate(pct_female = count/6896*100)|>
+  arrange(desc(pct_female))
+  
+marvel_data |>
+  group_by(SEX)|>
+  summarize(count = n())|>
+  mutate(pct_female = count/16376*100)|>
+    arrange(desc(pct_female))
+  
+
+# Display results of code below this codeblock
+
+
+
+```
+
+### Sentence 2
+
+-   **Sentence text**: Women and men were almost exactly equally likely to have a secret identity in the Marvel universe (49.4 percent of males and 49.5 percent of females), while in the DC universe 51 percent of males had a secret identity and 45 percent of females did.
+-   **Analysis summary**: Our results are different from what the article says. From this computation, only 38% of all Marvel characters seem to have a secret identity. 27.5% of that group represents male characters, while only 9% of that group represents female characters. Looking at DC, just over 36% of superheroes have secret identities, with 9% being female and 25% being male. These differences could also be explained by the fact that the current set of data has counts for genders other than male and female.
+
+```{r}
+# Put code to reverse engineer sentence here
+
+marvel_data |>
+  filter(str_detect(ID, "Secret Identity")) |>
+  group_by(ID, SEX) |>
+  summarise(count = n()) |>
+  mutate(pct_fem_secret_ID = count/16376*100)
+
+dc_data |>
+filter(str_detect(ID, "Secret Identity")) |>
+  group_by(ID, SEX) |>
+  summarise(count = n()) |>
+  mutate(pct_fem_secret_ID = count/6896*100)
+# Display results of code below this codeblock
+
+```
+
+### Sentence 3
+
+-   **Sentence text**: Ms. Marvel is one of just 3,599 female characters in Marvel's universe. To arrive at that number, I pulled data from the Marvel and DC Wikia databases.
+-   **Analysis summary**: The finding that we discovered was 3837 female characters in Marvel's universe, which is 238 more characters than listed in the article. This may be because we are working with a more updated data set that has added more female characters since the article was published.
+
+```{r}
+# Put code to reverse engineer sentence here
+
+marvel_data |>
+  group_by(SEX)|>
+  summarize(count = n())
+
+# Display results of code below this codeblock
+  Female: 3837
+
+```
+
+### Sentence 4
+
+-   **Sentence text**: When we zero in on the 2,415 DC and 3,342 Marvel characters with gender data who appear at least 10 times --- the set of characters that probably gives the most consistent view of what we see on the page --- female characters make up only 30.9 percent of the DC universe and 30.6 percent of the Marvel universe.
+-   **Analysis summary**: The code is very similar with a result of 30.55 percent of characters being female in the DC universe and 30.04 percent of characters being female in the Marvel universe. The difference in the decimals may be because of the data changing slightly.
+
+```{r}
+# Put code to reverse engineer sentence here
+
+dc_appearances_greater_10 <- dc_wikia_data |> group_by(SEX, APPEARANCES) |> filter(APPEARANCES >= 10)
+
+dc_appearances_greater_10 |>
+  filter(str_detect(SEX, 'Female Characters')) |>
+  group_by(SEX, APPEARANCES >=10) |>
+  summarize(count=n()) |>
+  mutate(pct_female_appearances = (count/2415)*100)
+
+marvel_appearances_greater_10 <- marvel_wikia_data |> group_by(SEX, APPEARANCES) |> filter(APPEARANCES >= 10)
+
+marvel_appearances_greater_10 |>
+  filter(str_detect(SEX, 'Female Characters')) |>
+  group_by(SEX, APPEARANCES >=10) |>
+  summarize(count=n()) |>
+  mutate(pct_female_appearances = (count/3342)*100)
+
+# Display results of code below this codeblock
+
+```
+
+Percentage of female Marvel characters with over 10 appearances = 30.55%. Percentage of female DC characters with over 10 appearances = 30.04%.
+
+### Sentence 5
+
+-   **Sentence text**: Of characters with gender data and 100 or more appearances (294 DC characters and 414 Marvel characters), only 29.0 percent of DC's are female, and a similar 31.1 percent of the Marvel crowd is.
+-   **Analysis summary**: The numbers are extremely skewed from one another when looking between the article and the code block. The code that we processed came to 3.51 percent for DC Comics and 3.83 percent for Marvel Comics. This is a large abnormality in the data, and perhaps at least some of the difference can be explained by the fact that the current data set includes genders other than male and female. But even so, just under four percent seems too low.
+
+```{r}
+# Put code to reverse engineer sentence here
+
+dc_appearances_greater_100 <- dc_wikia_data |> group_by(SEX, APPEARANCES) |> filter(APPEARANCES >= 100)
+
+dc_appearances_greater_100 |>
+  filter(str_detect(SEX, 'Female Characters')) |>
+  group_by(SEX, APPEARANCES >=100) |>
+  summarize(count=n()) |>
+  mutate(pct_female_appearances = (count/2415)*100)
+
+marvel_appearances_greater_100 <- marvel_wikia_data |> group_by(SEX, APPEARANCES) |> filter(APPEARANCES >= 100)
+
+marvel_appearances_greater_100 |>
+  filter(str_detect(SEX, 'Female Characters')) |>
+  group_by(SEX, APPEARANCES >=100) |>
+  summarize(count=n()) |>
+  mutate(pct_female_appearances = (count/3342)*100)
+
+# Display results of code below this codeblock
+
+```
+
+Percentage of female Marvel characters with over 100 appearences = 3.83%. Percentage of female DC characyers with over 100 appearences = 3.51%. -30-
+
+## Critical Analysis Memo
+
+During our research, we discovered our results were similar for specific questions but drastically different in others, and the SEX variable held more than just male and female characters. In all, our findings support Walt Hickey\'s article about a disproportionate number of male characters' appearances in the DC and Marvel Universe compared to female and other characters. Hickey continuously updates his data as the comic books and new information are released. This would explain why our results for Sentence 2, how likely are male and female characters to have secret identities, are drastically different from the article. For the other sentences, the calculations are similar or a bit more than the results in the report. 
+
+Hickey told a compelling story using the data by starting out rather broad and then getting more specific as the story progressed. He starts out by giving readers the total percentage of male and female characters who have made at least one appearance in comics from both the Marvel and DC Universes, and then goes into detail about how the percentages of each gender changes as the number of appearances increases. Hickey gives readers the percentages of female characters with over ten appearances, and the answer is around 30% for both Marvel and DC. He then takes it a step further and breaks down the percentages of females with over 100 appearances, which decreases by 1% for DC Comics but increases by 1% for Marvel Comics. By starting out more broad and then digging deeper into the data incrementally, Hickey effectively makes the findings easier to understand for the readers. 
+
+The data communicated in both a visual manner and explanatory manner. The majority of it is at least in the beginning and middle of the story was explained in the text, with Hickey presenting the percentages of female characters as he analyzed by number of appearances. Towards the end of the story, Hickey includes five different bar and line graphs to explain other findings, including the number of new comic book characters introduced per year and the percentage of new characters who are female. Overall, the presentation of the data findings could have been improved by using visual graphics more throughout the story rather than just the end. Since he was mostly comparing percentages in the beginning, pie charts could have been used to create more of a balance, at least structurally. 
+
+Hickey was honest about the difficulty of finding a reliable means of tracking male and female audience members. Nevertheless, they were able to conclude that there was a disproportionate gap between the amount of male and female characters and their appearances. Jason Aaron, an American comic book writer, suggested funny convention attendance lists would make a sound-tracking system between male and female audience members. \"Comic book convention attendance breaks close to even between genders,\" Aaron said. Other than contacting experts, Hickey looked into the website Fandom, known as Wikia at the time. Jimmy Wales, Wikipedia co-founder, and Angela Beesley created Fandom. The website functions similarly to Wikipedia, where the content is fan-generated.  To remain as transparent as possible, they published the article with the GitHub link to all of the data they had. They pulled relevant information from the Marvel Wikia and DC Wikia databases. 
+
+The GitHub link made it very easy to access all the information the reporters had and informed us of all their findings. They also provided a key for all of the database columns so we could better understand how they organized and categorized the characters. We relied heavily on two variables: SEX and APPEARANCE. Interestingly, Hickey included more than females and males in the SEX column. He had genders as well: Agender, Genderfluid, and N/A. Though male characters still make a high appearance, it adds representation to lesser-known or seen characters.  
+
+The data set was originally created and provided by Tim Hanley. The spreadsheets can be obtained through a request to [timhanley01\@gmail.com](mailto:timhanley01@gmail.com). Hanley collected the lists of released comics from Diamond Distribution from Previews and Midtown\'s List, and credits from Grand Comics Database. He makes charts and separate posts for Marvel and DC Comics. For characters that he could not assume character\'s gender for, he used google search to fill in the gaps of information and generally did them mostly through assumption based on names. Due to the fact that he had to pull from various different sources and datasets to fill in the gaps for missing information, the task of gathering and entering data is tedious pre-analysis. More specifically, fact checking and accuracy also plays a large and time consuming role in the process as well. Hanley updates the spreadsheets as comics are released and published over time, as stated on his website. 
